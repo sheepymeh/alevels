@@ -2,8 +2,9 @@
 <html>
 <head>
 	<meta charset='utf-8'>
+	<link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Nunito:wght@600&display=swap' rel='stylesheet'>
 	<meta name='viewport' content='width=device-width, initial-scale=1'>
-	<link href='https://fonts.googleapis.com/css2?family=Inter&family=Nunito:wght@600&display=swap' rel='stylesheet'> 
+	<title>A Levels Countdown</title>
 	<style>
 		* {
 			box-sizing: border-box;
@@ -12,24 +13,49 @@
 			font: 18px/1.5 Inter, sans-serif;
 		}
 		body {
-			display: flex;
+			display: grid;
+			grid-template-columns: 550px 1fr;
+			grid-template-rows: 1fr 28px;
+			height: 100vh;
+			gap: 10px 30px;
+			grid-template-areas:
+				"subjects info"
+				"footer footer";
 			margin: 0;
 			color: #fff;
 			background-color: #252935;
+			padding: 20px;
 		}
 		h1, h2, h3, button {
 			margin: 0;
 			font-family: 'Nunito' !important;
 			font-weight: 600 !important;
 		}
+		strong {
+			font-weight: 600;
+		}
 		h1 {
 			font-size: 1.5rem;
 		}
 		h2 {
-			font-size: 1.25rem;
+			font-size: 1.3rem;
 		}
 		h3 {
-			font-size: 1rem;
+			font-size: 1.25rem;
+		}
+		nav {
+			overflow-y: auto;
+			scrollbar-width: none;
+			position: relative;
+		}
+		nav::after {
+			content: '';
+			display: block;
+			background-image: linear-gradient(to bottom, transparent, rgba(37, 41, 53, .4), rgba(37, 41, 53, .7), rgba(37, 41, 53, .9));
+			height: 50px;
+			width: 550px;
+			position: fixed;
+			bottom: 58px;
 		}
 		#subject-selector {
 			position: fixed;
@@ -39,8 +65,8 @@
 			width: 100%;
 			overflow-y: auto;
 			background-color: #252935;
-			transform: translateX(-100%);
-			transition: .25s ease-in-out transform;
+			transform: translateX(100%);
+			transition: .2s ease-in-out transform;
 			padding: 20px;
 		}
 		label {
@@ -81,44 +107,65 @@
 			border: none;
 			border-radius: 200px;
 			padding: 12px 50px;
+			float: right;
 		}
-		main {
-			columns: 2 auto;
-			column-gap: 30px;
+		section {
+			display: inline-grid;
 			width: 100%;
-			margin: 0 30px;
-			flex-grow: 1;
-		}
-		details {
-			display: inline-block;
-			width: 100%;
-			margin: 17px 0;
+			margin-bottom: 30px;
 			background-color: #fff;
 			color: #212121;
 			border-radius: 32px;
 			padding: 24px 20px;
-		}
-		details summary {
-			display: grid;
 			grid-template-columns: 1fr auto;
 			gap: 5px 10px;
 			grid-template-areas:
 				"subject code"
 				"countdown countdown";
+			cursor: pointer;
 		}
-		details summary div {
+		section:last-child {
+			margin-bottom: 50px;
+		}
+		section div {
 			grid-area: countdown;
+		}
+		a {
+			color: inherit;
+		}
+		footer {
+			display: flex;
+			justify-content: space-between;
+			grid-area: footer;
+		}
+		footer img {
+			cursor: pointer;
 		}
 		@media all and (max-width: 900px) {
 			:root {
 				font-size: 16px;
 			}
-			main {
-				columns: 1;
-				margin: 0 10px;
+			body {
+				display: flex;
+				flex-direction: column;
+				padding: 10px;
 			}
-			details {
-				margin: 8px 0;
+			nav {
+				overflow-y: initial;
+			}
+			nav::after {
+				display: none;
+			}
+			section {
+				padding: 12px 16px;
+				margin-bottom: 16px;
+				border-radius: 20px;
+			}
+			section:last-child {
+				margin-bottom: 0px;
+			}
+			footer {
+				padding: 10px 5px;
 			}
 		}
 		@media all and (max-width: 730px) {
@@ -138,12 +185,17 @@
 	</style>
 </head>
 <body>
+	<nav></nav>
+	<main></main>
+	<footer>
+		<div>Made by <a href='//github.com/sheepymeh/alevels'>@sheepymeh</a></div>
+		<img src='settings.svg' height='28' onclick='slideon()'>
+	</footer>
 	<div id='subject-selector'>
 		<h1>Subjects I Take:</h1>
 		<div id='subject-selector-list'></div>
 		<button onclick='slideoff()'>Next</button>
 	</div>
-	<main></main>
 	<script src='https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js'></script>
 	<script>
 		if (!('subscriptions' in localStorage)) localStorage.subscriptions = JSON.stringify([]);
@@ -165,8 +217,11 @@
 				localStorage.subscriptions = JSON.stringify(subscriptions);
 			}
 		}
+		function slideon() {
+			document.querySelector('#subject-selector').style.transform = 'translateX(0)';
+		}
 		function slideoff() {
-			document.querySelector('#subject-selector').style.transform = 'translateX(-100%)';
+			document.querySelector('#subject-selector').style.transform = 'translateX(100%)';
 			createSubscriptions();
 		}
 		function getTime(time, date) {
@@ -200,8 +255,21 @@
 				}
 			}
 		}
+		function openSubject(subject) {
+			let papers = ''
+			for (const paper of data[subject])
+				papers += `
+				<div>
+					<h3>Paper ${paper['PAPER NO.']}</h3>
+					Type of test: ${paper.MOA}<br>
+					Date: ${paper.DATE}<br>
+					Time: ${paper.TIME}<br>
+					Duration: ${paper.DURATION}<br>
+				</div>`;
+			document.querySelector('main').innerHTML = papers;
+		}
 		function createSubscriptions() {
-			document.querySelector('main').innerHTML = '';
+			document.querySelector('nav').innerHTML = '';
 			let subscriptionData = {};
 			for (const subject of Object.keys(data)) {
 				const subjectCode = data[subject][0].CODE;
@@ -217,19 +285,7 @@
 			.reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
 			for (const subject of Object.keys(subscriptionData)) {
 				const subjectCode = subscriptionData[subject].data[0].CODE;
-				let section = `<details><summary><h1>${subject}</h1><h2>${subjectCode}</h2><div>Your next exam is in <span class='countdown' data-timestamp='${subscriptionData[subject].nextExam}' data-subj='${subject}'>...</span></div></summary>`;
-				for (const paper of subscriptionData[subject].data) {
-					section += `
-					<div>
-						<h3>Paper ${paper['PAPER NO.']}</h3>
-						Type of test: ${paper.MOA}<br>
-						Date: ${paper.DATE}<br>
-						Time: ${paper.TIME}<br>
-						Duration: ${paper.DURATION}<br>
-					</div>`;
-				}
-				section += '</details>';
-				document.querySelector('main').innerHTML += section;
+				document.querySelector('nav').innerHTML += `<section onclick='openSubject("${subject}")'><h1>${subject}</h1><h2>${subjectCode}</h2><div>Next paper in <strong class='countdown' data-timestamp='${subscriptionData[subject].nextExam}' data-subj='${subject}'>...</strong></div></section>`;
 			}
 			updateTime();
 		}
