@@ -43,10 +43,9 @@
 		h3 {
 			font-size: 1.25rem;
 		}
-		nav {
+		nav, main {
 			overflow-y: auto;
 			scrollbar-width: none;
-			position: relative;
 		}
 		nav::after {
 			content: '';
@@ -68,6 +67,7 @@
 			transform: translateX(100%);
 			transition: .2s ease-in-out transform;
 			padding: 20px;
+			z-index: 1;
 		}
 		label {
 			cursor: pointer;
@@ -116,7 +116,7 @@
 			background-color: #fff;
 			color: #212121;
 			border-radius: 32px;
-			padding: 24px 20px;
+			padding: 20px;
 			grid-template-columns: 1fr auto;
 			gap: 5px 10px;
 			grid-template-areas:
@@ -141,6 +141,36 @@
 		footer img {
 			cursor: pointer;
 		}
+		header {
+			display: flex;
+			justify-content: space-between;
+		}
+		main h3 {
+			margin: 6px 0;
+		}
+		#close {
+			display: none;
+			position: fixed;
+			top: 30px;
+			right: 12px;
+			background-color: #000;
+			opacity: .5;
+			border-radius: 50%;
+			width: 30px;
+			height: 30px;
+			text-align: center;
+			line-height: 26px;
+			font-size: 30px;
+			cursor: pointer;
+		}
+		@media all and (max-width: 1200px) {
+			body {
+				grid-template-columns: 400px 1fr;
+			}
+			nav::after {
+				width: 400px;
+			}
+		}
 		@media all and (max-width: 900px) {
 			:root {
 				font-size: 16px;
@@ -152,6 +182,7 @@
 			}
 			nav {
 				overflow-y: initial;
+				flex: 1;
 			}
 			nav::after {
 				display: none;
@@ -166,6 +197,24 @@
 			}
 			footer {
 				padding: 10px 5px;
+			}
+			main {
+				position: fixed;
+				width: 100%;
+				background-color: #252935;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				padding: 30px 20px;
+				transition: .2s ease-in-out transform;
+				transform: translateX(-100%);
+			}
+			main h2 {
+				margin-right: 36px;
+			}
+			#close {
+				display: block;
 			}
 		}
 		@media all and (max-width: 730px) {
@@ -189,12 +238,12 @@
 	<main></main>
 	<footer>
 		<div>Made by <a href='//github.com/sheepymeh/alevels'>@sheepymeh</a></div>
-		<img src='settings.svg' height='28' onclick='slideon()'>
+		<img src='settings.svg' height='28' onclick='slideMenuOn()'>
 	</footer>
 	<div id='subject-selector'>
 		<h1>Subjects I Take:</h1>
 		<div id='subject-selector-list'></div>
-		<button onclick='slideoff()'>Next</button>
+		<button onclick='slideMenuOff()'>Next »</button>
 	</div>
 	<script src='https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js'></script>
 	<script>
@@ -217,10 +266,10 @@
 				localStorage.subscriptions = JSON.stringify(subscriptions);
 			}
 		}
-		function slideon() {
+		function slideMenuOn() {
 			document.querySelector('#subject-selector').style.transform = 'translateX(0)';
 		}
-		function slideoff() {
+		function slideMenuOff() {
 			document.querySelector('#subject-selector').style.transform = 'translateX(100%)';
 			createSubscriptions();
 		}
@@ -256,7 +305,7 @@
 			}
 		}
 		function openSubject(subject) {
-			let papers = ''
+			let papers = `<header><h1>${subject}</h1><h2>${data[subject][0].CODE}</h2></header><div id='close' onclick='closeSubject()'>×</div>`;
 			for (const paper of data[subject])
 				papers += `
 				<div>
@@ -267,6 +316,10 @@
 					Duration: ${paper.DURATION}<br>
 				</div>`;
 			document.querySelector('main').innerHTML = papers;
+			document.querySelector('main').style.transform = 'translateX(0)';
+		}
+		function closeSubject() {
+			document.querySelector('main').style.transform = 'translateX(-100%)';
 		}
 		function createSubscriptions() {
 			document.querySelector('nav').innerHTML = '';
