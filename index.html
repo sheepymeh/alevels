@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8'>
+	<meta name='viewport' content='width=device-width, initial-scale=1'>
+	<link href='https://fonts.googleapis.com/css2?family=Inter&family=Nunito:wght@600&display=swap' rel='stylesheet'> 
+	<style>
+		* {
+			box-sizing: border-box;
+		}
+		:root {
+			font: 18px/1.5 Inter, sans-serif;
+		}
+		body {
+			display: flex;
+			margin: 0;
+			color: #fff;
+			background-color: #252935;
+		}
+		h1, h2, h3, button {
+			margin: 0;
+			font-family: 'Nunito' !important;
+			font-weight: 600 !important;
+		}
+		h1 {
+			font-size: 1.5rem;
+		}
+		h2 {
+			font-size: 1.25rem;
+		}
+		h3 {
+			font-size: 1rem;
+		}
+		#subject-selector {
+			position: fixed;
+			top: 0;
+			left: 0;
+			height: 100%;
+			width: 100%;
+			overflow-y: auto;
+			background-color: #252935;
+			transform: translateX(-100%);
+			transition: .25s ease-in-out transform;
+			padding: 20px;
+		}
+		label {
+			cursor: pointer;
+		}
+		#subject-selector h1, #subject-selector button {
+			margin: 15px 25px;
+		}
+		#subject-selector-list input {
+			display: none;
+		}
+		#subject-selector-list label {
+			margin: 15px 25px;
+			display: inline-block;
+			height: 110px;
+			width: 180px;
+			border-radius: 12px;
+			border: 3px solid #777;
+			text-align: right;
+			position: relative;
+			background-color: #000;
+			text-transform: capitalize;
+		}
+		#subject-selector-list label div {
+			position: absolute;
+			bottom: 0;
+			right: 0;
+			padding: 10px;
+		}
+		#subject-selector-list input:checked + label {
+			border-color: #8a38ed;
+		}
+		button {
+			cursor: pointer;
+			font: inherit;
+			color: inherit;
+			background-color: #8a38ed;
+			border: none;
+			border-radius: 200px;
+			padding: 12px 50px;
+		}
+		main {
+			columns: 2 auto;
+			column-gap: 30px;
+			width: 100%;
+			margin: 0 30px;
+			flex-grow: 1;
+		}
+		details {
+			display: inline-block;
+			width: 100%;
+			margin: 17px 0;
+			background-color: #fff;
+			color: #212121;
+			border-radius: 32px;
+			padding: 24px 20px;
+		}
+		details summary {
+			display: grid;
+			grid-template-columns: 1fr auto;
+			gap: 5px 10px;
+			grid-template-areas:
+				"subject code"
+				"countdown countdown";
+		}
+		details summary div {
+			grid-area: countdown;
+		}
+		@media all and (max-width: 900px) {
+			:root {
+				font-size: 16px;
+			}
+			main {
+				columns: 1;
+				margin: 0 10px;
+			}
+			details {
+				margin: 8px 0;
+			}
+		}
+		@media all and (max-width: 730px) {
+			#subject-selector h1, #subject-selector button {
+				margin: 7px 5px;
+			}
+			#subject-selector-list label {
+				margin: 7px 5px;
+				height: 100px;
+				width: calc(50% - 10px);
+				min-width: 120px;
+				border-radius: 12px;
+				border: 3px solid #777;
+			}
+
+		}
+	</style>
+</head>
+<body>
+	<div id='subject-selector'>
+		<h1>Subjects I Take:</h1>
+		<div id='subject-selector-list'></div>
+		<button onclick='slideoff()'>Next</button>
+	</div>
+	<main></main>
+	<script src='https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js'></script>
+	<script>
+		if (!('subscriptions' in localStorage)) localStorage.subscriptions = JSON.stringify([]);
+		let data = {};
+		const dateRegex = new RegExp(/(\d{2})\/(\d{2})\/(\d{4})/);
+		const timeRegex = new RegExp(/(\d{2}):(\d{2})?/);
+		let subscriptions = JSON.parse(localStorage.subscriptions);
+		const subscription = {
+			add: code => {
+				subscriptions.push(code.toString());
+				subscription.write();
+			},
+			remove: code => {
+				subscriptions.splice(subscriptions.indexOf(code.toString()));
+				subscription.write();
+			},
+			toggle: code => subscription[subscriptions.includes(code.toString()) ? 'remove' : 'add'](code.toString()),
+			write: () => {
+				localStorage.subscriptions = JSON.stringify(subscriptions);
+			}
+		}
+		function slideoff() {
+			document.querySelector('#subject-selector').style.transform = 'translateX(-100%)';
+			createSubscriptions();
+		}
+		function getTime(time, date) {
+			const dateArr = dateRegex.exec(date);
+			const timeArr = timeRegex.exec(time);
+			return new Date(dateArr[3], dateArr[2] - 1, dateArr[1], timeArr[1], timeArr[2]);
+		}
+		function updateTime() {
+			const time = new Date();
+			const elems = document.querySelectorAll('.countdown');
+			for (const elem of elems) {
+				const countdown = Math.round((elem.dataset.timestamp - time.getTime()) / 1000);
+				const days = Math.floor(countdown / 86400);
+				if (days > 1) elem.innerText = `${days} days`;
+				else {
+					const hours = Math.floor((countdown - days * 86400) / 3600);
+					if (days == 1) elem.innerText = `1 day, ${hours} hour${hours == 1 ? '' : 's'}`;
+					else if (hours > 12) elem.innerText = `${hours} hour${hours == 1 ? '' : 's'}`;
+					else {
+						const minutes = Math.floor((countdown - days * 86400 - hours * 3600) / 60);
+						console.log(countdown - days * 86400 - hours * 3600);
+						console.log(countdown);
+						console.log(time.getTime());
+						console.log(elem.dataset.timestamp)
+						if (hours > 0) {
+							if (minutes == 0) elem.innerText = `${hours} hour${hours == 1 ? '' : 's'}`;
+							else elem.innerText = `${hours} hour${hours == 1 ? '' : 's'}, ${minutes} minute${minutes == 1 ? '' : 's'}`;
+						}
+						else elem.innerText = `${minutes} minute${minutes == 1 ? '' : 's'}`;
+					}
+				}
+			}
+		}
+		function createSubscriptions() {
+			document.querySelector('main').innerHTML = '';
+			let subscriptionData = {};
+			for (const subject of Object.keys(data)) {
+				const subjectCode = data[subject][0].CODE;
+				if (subscriptions.includes(subjectCode)) {
+					subscriptionData[subject] = {
+						data: data[subject],
+						nextExam: getTime(data[subject][0].TIME, data[subject][0].DATE).getTime()
+					};
+				}
+			}
+			subscriptionData = Object.entries(subscriptionData)
+			.sort(([,a],[,b]) => a.nextExam-b.nextExam)
+			.reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+			for (const subject of Object.keys(subscriptionData)) {
+				const subjectCode = subscriptionData[subject].data[0].CODE;
+				let section = `<details><summary><h1>${subject}</h1><h2>${subjectCode}</h2><div>Your next exam is in <span class='countdown' data-timestamp='${subscriptionData[subject].nextExam}' data-subj='${subject}'>...</span></div></summary>`;
+				for (const paper of subscriptionData[subject].data) {
+					section += `
+					<div>
+						<h3>Paper ${paper['PAPER NO.']}</h3>
+						Type of test: ${paper.MOA}<br>
+						Date: ${paper.DATE}<br>
+						Time: ${paper.TIME}<br>
+						Duration: ${paper.DURATION}<br>
+					</div>`;
+				}
+				section += '</details>';
+				document.querySelector('main').innerHTML += section;
+			}
+			updateTime();
+		}
+		Papa.parse('timetable.csv', {
+			download: true,
+			header: true,
+			complete: res => {
+				if (subscriptions.length == 0) document.querySelector('#subject-selector').style.transform = 'initial';
+				for (const paper of res.data) {
+					const subject = `H${(paper.CODE.substring(0, 2) == '98') ? 3 : (paper.CODE.substring(0, 1) == '9') ? 2 : 1} ${paper.SUBJECT}`;
+					if (!(subject in data)) data[subject] = [];
+					data[subject].push(paper);
+				}
+				data = Object.keys(data).sort().reduce((res, key) => {
+					res[key] = data[key];
+					return res;
+				}, {});
+				let subjectList = '';
+				for (const subject of Object.keys(data)) {
+					const subjectCode = data[subject][0].CODE;
+					subjectList += `<input type='checkbox' id='checkbox-${subjectCode}' onchange='subscription.toggle("${subjectCode}")' ${subscriptions.includes(subjectCode) ? 'checked=1' : ''}><label for='checkbox-${subjectCode}'><div>${subject.toLowerCase()}</div></label>`;
+				}
+				document.querySelector('#subject-selector-list').innerHTML += subjectList;
+				createSubscriptions();
+				setInterval(updateTime, 5000);
+			}
+		});
+	</script>
+</body>
+</html>
