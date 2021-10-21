@@ -99,6 +99,12 @@
 		#subject-selector-list input:checked + label {
 			border-color: #8a38ed;
 		}
+		#subject-selector-footer {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 0 25px;
+		}
 		button {
 			cursor: pointer;
 			font: inherit;
@@ -129,6 +135,9 @@
 		}
 		section div {
 			grid-area: countdown;
+		}
+		.completed {
+			opacity: .7;
 		}
 		a {
 			color: inherit;
@@ -238,13 +247,15 @@
 	<nav></nav>
 	<main></main>
 	<footer>
-		<div>Made by <a href='//github.com/sheepymeh/alevels'>@sheepymeh</a></div>
 		<img src='settings.svg' height='28' onclick='slideMenuOn()'>
 	</footer>
 	<div id='subject-selector'>
 		<h1>Subjects I Take:</h1>
 		<div id='subject-selector-list'></div>
-		<button onclick='slideMenuOff()'>Next »</button>
+		<div id='subject-selector-footer'>
+			<div>Made by <a href='//github.com/sheepymeh/alevels'>@sheepymeh</a></div>
+			<button onclick='slideMenuOff()'>Next »</button>
+		</div>
 	</div>
 	<script src='https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js'></script>
 	<script>
@@ -283,19 +294,16 @@
 			const time = new Date();
 			const elems = document.querySelectorAll('.countdown');
 			for (const elem of elems) {
+				if (elem.dataset.timestamp == 9999999999999) continue;
 				const countdown = Math.round((elem.dataset.timestamp - time.getTime()) / 1000);
 				const days = Math.floor(countdown / 86400);
-				if (days > 1) elem.innerText = `${days} days`;
+				if (days > 1) elem.innerText = `${days + 1} days`;
 				else {
 					const hours = Math.floor((countdown - days * 86400) / 3600);
 					if (days == 1) elem.innerText = `1 day, ${hours} hour${hours == 1 ? '' : 's'}`;
 					else if (hours > 12) elem.innerText = `${hours} hour${hours == 1 ? '' : 's'}`;
 					else {
 						const minutes = Math.floor((countdown - days * 86400 - hours * 3600) / 60);
-						console.log(countdown - days * 86400 - hours * 3600);
-						console.log(countdown);
-						console.log(time.getTime());
-						console.log(elem.dataset.timestamp)
 						if (hours > 0) {
 							if (minutes == 0) elem.innerText = `${hours} hour${hours == 1 ? '' : 's'}`;
 							else elem.innerText = `${hours} hour${hours == 1 ? '' : 's'}, ${minutes} minute${minutes == 1 ? '' : 's'}`;
@@ -328,9 +336,16 @@
 			for (const subject of Object.keys(data)) {
 				const subjectCode = data[subject][0].CODE;
 				if (subscriptions.includes(subjectCode)) {
+					let nextExam = 9999999999999;
+					for (const exam of data[subject]) {
+						if (getTime(exam.TIME, exam.DATE).getTime() > Date.now()) {
+							nextExam = getTime(exam.TIME, exam.DATE).getTime();
+							break;
+						}
+					}
 					subscriptionData[subject] = {
 						data: data[subject],
-						nextExam: getTime(data[subject][0].TIME, data[subject][0].DATE).getTime()
+						nextExam: nextExam
 					};
 				}
 			}
@@ -339,7 +354,9 @@
 			.reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
 			for (const subject of Object.keys(subscriptionData)) {
 				const subjectCode = subscriptionData[subject].data[0].CODE;
-				document.querySelector('nav').innerHTML += `<section onclick='openSubject("${subject}")'><h1>${subject}</h1><h2>${subjectCode}</h2><div>Next paper in <strong class='countdown' data-timestamp='${subscriptionData[subject].nextExam}' data-subj='${subject}'>...</strong></div></section>`;
+				document.querySelector('nav').innerHTML += subscriptionData[subject].nextExam != 9999999999999 ? 
+					`<section onclick='openSubject("${subject}")'><h1>${subject}</h1><h2>${subjectCode}</h2><div>Next paper in <strong class='countdown' data-timestamp='${subscriptionData[subject].nextExam}' data-subj='${subject}'>...</strong></div></section>` :
+					`<section class='completed' onclick='openSubject("${subject}")'><h1>${subject}</h1><h2>${subjectCode}</h2><div>All papers completed</section>`;
 			}
 			updateTime();
 		}
